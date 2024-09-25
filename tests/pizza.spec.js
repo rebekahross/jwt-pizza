@@ -181,10 +181,10 @@ test("create franchise", async ({ page }) => {
   await page.getByPlaceholder("Password").fill("admin");
   await page.getByRole("button", { name: "Login" }).click();
 
-  expect(page.getByRole("link", { name: "Admin" })).toBeVisible();
+  expect(page.getByRole("link", { name: "Admin", exact: true })).toBeVisible();
 
   // go to admin dashboard
-  await page.getByRole("link", { name: "Admin" }).click();
+  await page.getByRole("link", { name: "Admin", exact: true }).click();
 
   // Create franchise
   expect(page.getByRole("button", { name: "Add Franchise" })).toBeVisible();
@@ -196,27 +196,27 @@ test("create franchise", async ({ page }) => {
 
   await expect(page.getByRole("cell", { name: "New franchise" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "franchisee" })).toBeVisible();
-
-  // await expect(page.getByRole("cell", { name: "Pizza" })).toBeVisible();
-  // await page.getByRole("cell", { name: "franchisee" }).nth(1).click();
-  // await page.getByRole("cell", { name: "Close" }).nth(1).click();
-  // await page.getByRole("button", { name: "Cancel" }).click();
 });
 
-test("logout with login", async ({ page }) => {
+test("register user then logout", async ({ page }) => {
   await page.route("*/**/api/auth", async (route) => {
-    if (route.request().method() == "PUT") {
-      const loginReq = { email: "d@jwt.com", password: "a" };
-      const loginRes = {
+    if (route.request().method() == "POST") {
+      const registerReq = {
+        name: "diner",
+        email: "d@jwt.com",
+        password: "diner",
+      };
+      const registerRes = {
         user: {
           id: 3,
-          name: "Kai Chen",
+          name: "diner",
           email: "d@jwt.com",
+          roles: [{ role: "diner" }],
         },
         token: "abcdef",
       };
-      expect(route.request().postDataJSON()).toMatchObject(loginReq);
-      await route.fulfill({ json: loginRes });
+      expect(route.request().postDataJSON()).toMatchObject(registerReq);
+      await route.fulfill({ json: registerRes });
     } else if (route.request().method() == "DELETE") {
       const logoutRes = {
         message: "logout successful",
@@ -227,15 +227,15 @@ test("logout with login", async ({ page }) => {
 
   await page.goto("http://localhost:5173/");
 
-  await expect(page.getByRole("link", { name: "Login" })).toBeVisible();
-  await page.getByRole("link", { name: "Login" }).click();
+  await page.getByRole("link", { name: "Register" }).click();
 
+  // Register user
+  await page.getByPlaceholder("Full name").fill("diner");
+  await page.getByPlaceholder("Full name").press("Tab");
   await page.getByPlaceholder("Email address").fill("d@jwt.com");
   await page.getByPlaceholder("Email address").press("Tab");
-  await page.getByPlaceholder("Password").fill("a");
-  await page.getByRole("button", { name: "Login" }).click();
-
-  await page.goto("http://localhost:5173/");
+  await page.getByPlaceholder("Password").fill("diner");
+  await page.getByRole("button", { name: "Register" }).click();
 
   await expect(page.getByRole("link", { name: "Login" })).not.toBeVisible();
   await expect(page.getByRole("link", { name: "Logout" })).toBeVisible();
@@ -244,16 +244,3 @@ test("logout with login", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Logout" })).not.toBeVisible();
   await expect(page.getByRole("link", { name: "Login" })).toBeVisible();
 });
-
-// test("logout with login v2", async ({ page }) => {
-//   await page.goto("http://localhost:5173/");
-
-//   await page.getByRole("link", { name: "Login" }).click();
-//   await page.getByPlaceholder("Email address").click();
-//   await page.getByPlaceholder("Email address").fill("a@jwt.com");
-//   await page.getByPlaceholder("Email address").press("Tab");
-//   await page.getByPlaceholder("Password").fill("admin");
-//   await page.getByRole("button", { name: "Login" }).click();
-//   await expect(page.getByRole("link", { name: "Logout" })).toBeVisible();
-//   await page.getByRole("link", { name: "Logout" }).click();
-// });
