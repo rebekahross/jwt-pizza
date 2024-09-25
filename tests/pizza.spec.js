@@ -121,7 +121,7 @@ test("purchase with login", async ({ page }) => {
   await expect(page.getByText("0.008")).toBeVisible();
 });
 
-test("create franchise", async ({ page }) => {
+test("create franchise and then delete it", async ({ page }) => {
   await page.route("*/**/api/auth", async (route) => {
     const loginReq = { email: "a@jwt.com", password: "admin" };
     const loginRes = {
@@ -138,6 +138,7 @@ test("create franchise", async ({ page }) => {
     await route.fulfill({ json: loginRes });
   });
 
+  let getFranchisesRes = [];
   await page.route("*/**/api/franchise", async (route) => {
     if (route.request().method() == "POST") {
       const franchiseReq = {
@@ -159,16 +160,8 @@ test("create franchise", async ({ page }) => {
       expect(route.request().postDataJSON()).toMatchObject(franchiseReq);
       await route.fulfill({ json: franchiseRes });
     } else if (route.request().method() == "GET") {
-      const franchiseRes = [
-        {
-          id: 1,
-          name: "New franchise",
-          stores: [],
-          admins: [{ id: 2, name: "franchisee", email: "f@jwt.com" }],
-        },
-      ];
       expect(route.request().method()).toBe("GET");
-      await route.fulfill({ json: franchiseRes });
+      await route.fulfill({ json: getFranchisesRes });
     }
   });
 
@@ -194,8 +187,28 @@ test("create franchise", async ({ page }) => {
   await page.getByPlaceholder("franchisee admin email").fill("f@jwt.com");
   await page.getByRole("button", { name: "Create" }).click();
 
+  getFranchisesRes = [
+    {
+      id: 1,
+      name: "New franchise",
+      stores: [],
+      admins: [{ id: 2, name: "franchisee", email: "f@jwt.com" }],
+    },
+  ];
+
   await expect(page.getByRole("cell", { name: "New franchise" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "franchisee" })).toBeVisible();
+
+  await page
+    .getByRole("row", { name: "New franchise" })
+    .getByRole("button")
+    .click();
+  await page.getByRole("button", { name: "Close" }).click();
+  getFranchisesRes = [];
+
+  await expect(
+    page.getByRole("cell", { name: "New franchise" })
+  ).not.toBeVisible();
 });
 
 test("register user then logout", async ({ page }) => {
