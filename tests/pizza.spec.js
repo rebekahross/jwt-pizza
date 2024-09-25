@@ -315,6 +315,86 @@ test("show diner dashboard", async ({ page }) => {
   await expect(page.getByText("0.05 ₿")).toBeVisible();
 });
 
+test("show about page and history page", async ({ page }) => {
+  await page.goto("http://localhost:5173/");
+  await page.getByRole("link", { name: "About" }).click();
+  expect(page.getByText("The secret sauce")).toBeVisible();
+  expect(page.getByText("At JWT Pizza, our amazing")).toBeVisible();
+
+  await page.getByRole("link", { name: "History" }).click();
+  expect(page.getByText("Mama Rucci, my my")).toBeVisible();
+  expect(page.getByText("It all started in Mama Ricci'")).toBeVisible();
+});
+
+test("see franchise dashboard", async ({ page }) => {
+  await page.route("*/**/api/auth", async (route) => {
+    const loginReq = {
+      email: "f@jwt.com",
+      password: "franchisee",
+    };
+    const loginRes = {
+      user: {
+        id: 3,
+        name: "franchisee",
+        email: "d@jwt.com",
+        roles: [{ role: "diner" }, { objectId: 1, role: "franchisee" }],
+      },
+      token: "abcdef",
+    };
+    expect(route.request().method()).toBe("PUT");
+    expect(route.request().postDataJSON()).toMatchObject(loginReq);
+    await route.fulfill({ json: loginRes });
+  });
+
+  await page.route("*/**/api/franchise/3", async (route) => {
+    if (route.request().method() == "GET") {
+      const getFranchisesRes = [
+        {
+          id: 1,
+          name: "Newest franchise!",
+          stores: [],
+          admins: [{ id: 3, name: "franchisee", email: "f@jwt.com" }],
+        },
+      ];
+      expect(route.request().method()).toBe("GET");
+      await route.fulfill({ json: getFranchisesRes });
+    }
+  });
+
+  await page.route("*/**/api/franchise/3/store", async (route) => {
+    if (route.request().method() == "POST") {
+      const storeReq = {
+        name: "Provo",
+      };
+      const storeRes = {
+        id: 1,
+        franchiseId: 1,
+        name: "Provo",
+      };
+      expect(route.request().method()).toBe("POST");
+      expect(route.request().postDataJSON()).toMatchObject(storeReq);
+      await route.fulfill({ json: storeRes });
+    }
+  });
+
+  await page.goto("http://localhost:5173/");
+
+  // Login
+  await page.getByRole("link", { name: "Login" }).click();
+  await page.getByPlaceholder("Email address").fill("f@jwt.com");
+  await page.getByPlaceholder("Email address").press("Tab");
+  await page.getByPlaceholder("Password").fill("franchisee");
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await page
+    .getByLabel("Global")
+    .getByRole("link", { name: "Franchise" })
+    .click();
+
+  expect(page.getByRole("button", { name: "Create store" })).toBeVisible();
+  expect(page.getByText("Newest franchise!")).toBeVisible();
+});
+
 // test("create store", async ({ page }) => {
 //   await page.route("*/**/api/auth", async (route) => {
 //     const loginReq = { email: "f@jwt.com", password: "franchisee" };
