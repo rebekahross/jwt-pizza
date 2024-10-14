@@ -101,14 +101,14 @@ jobs:
       - build
       - deploy
     runs-on: ubuntu-latest
-    env:
-      version: ${{needs.build.outputs.version}}
     steps:
-      - name: Create staging Release
+      - name: Create Release
         uses: ncipollo/release-action@v1
+        env:
+          version: ${{needs.build.outputs.version}}
         with:
-          tag: stage-version-${{ env.version }}
-          name: Staging Version ${{ env.version }}
+          tag: version-${{ env.version }}
+          name: Version ${{ env.version }}
           body: |
             ## 🚀 Changes
 
