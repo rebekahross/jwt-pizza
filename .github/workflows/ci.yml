@@ -104,13 +104,14 @@ jobs:
     env:
       version: ${{needs.build.outputs.version}}
     steps:
-      - name: Create Release
+      - name: Create staging release
         uses: ncipollo/release-action@v1
         with:
           tag: stage-version-${{ env.version }}
-          name: Staging Version ${{ env.version }}
+          name: Staging ${{ env.version }}
+          generateReleaseNotes: true
           body: |
-            ## 🚀 Changes
+            ## Description
 
             ${{ github.event.head_commit.message }}
 
