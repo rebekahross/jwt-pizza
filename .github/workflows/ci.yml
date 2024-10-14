@@ -77,6 +77,7 @@ jobs:
 
       - name: Push to AWS S3
         run: |
+          echo $version
           echo Deploying $version
           aws s3 cp dist s3://${{ secrets.APP_BUCKET }}/$version --recursive
 
