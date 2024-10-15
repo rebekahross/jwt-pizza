@@ -102,11 +102,11 @@ jobs:
       - deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Create production release
+      - name: Create staging release
         uses: ncipollo/release-action@v1
         with:
           tag: version-${{ env.version }}
-          name: Staging ${{ env.version }}
+          name: Version ${{ env.version }}
           allowUpdates: true
           generateReleaseNotes: true
           makeLatest: true
